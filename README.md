@@ -7,6 +7,15 @@ Cada parte del enunciado se encuentra en las ramas del repositorio, el main corr
 * Cristobal Abarca
 * Rodrigo Ubilla
 
+## Creación
+***
+Debe seguir los siguientes pasos para hacer correr el programa.
+```
+$ make
+$ ./output
+```
+
+
 ## Fallas en la implementación
 Tal como se puede apreciar, solo la parte secuencial fue ingresada al repositorio y la parte OpenMP está incompleta y/o con errores. La parte MPI no fue hecha, por tiempo.
 Las intenciones estuvieron, pero no hubo ninguna oportunidad para saber en qué estábamos fallando, de la misma manera que no sabíamos como implementar el código paralelo de la manera correcta. Implementábamos algo y este solo quedaba en espera más del tiempo secuencial, a pesar de estar ocupando todos los hilos de la CPU.
