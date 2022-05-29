@@ -1,133 +1,158 @@
+// C++
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <string.h>
-#include <math.h>
+#include <vector>
+#include <cmath>
+
 #include <omp.h>
+
 using namespace std;
+
+void Integrantes()
+{
+    cout << "Los integrantes son: \n\t1. Martín Sobarzo.\n\t2. Cristobal Abarca.\n\t3. Rodrigo Ubilla." << endl;
+}
+
+void Evaluar(ofstream *Archivo_Aux, vector<string> Aux)
+{
+    //cout << "Está en la función externa" << endl;
+
+    char delimitador = ';';
+
+    //int Threads = omp_get_thread_num();
+    //cout << "Hilos disponibles: "<< Threads << endl;
+
+    string Token[3];
+    //vector<string> Datos;
+    vector<string> PregCorrectas = {"\"A\"", "\"E\"", "\"C\"", "\"B\"", "\"B\"", "\"D\"", "\"A\"", "\"B\"", "\"E\"", "\"C\"", "\"B\"", "\"D\""};
+
+#pragma omp parallel
+{
+    int RespCorrectas[3], RespIncorrectas[3], RespOmitidas[3];
+    int ID = omp_get_thread_num();
+
+    #pragma omp for
+    for(int i = 0; i < Aux.size(); i++){
+        stringstream columnas(Aux.at(i));
+        
+        getline(columnas, Token[ID], delimitador);
+
+        #pragma omp orderd
+        for(int j = 0; j < PregCorrectas.size(); j++){
+            string Dato;
+            getline(columnas, Dato, delimitador);
+            
+            if(Dato == "\"-\""){
+                RespOmitidas[ID] += 1;
+                //cout << "Hilo: " << omp_get_thread_num() << " = " << "Omitidas " << RespOmitidas << endl;
+            }
+            else{
+                if(Dato == PregCorrectas.at(j)){
+                    RespCorrectas[ID] += 1;
+                    //cout << "Hilo: " << omp_get_thread_num() << " = " << "Correctas " << RespCorrectas << endl;
+                }
+                else{
+                    RespIncorrectas[ID] += 1;
+                    //cout << "Hilo: " << omp_get_thread_num() << " = " << "Incorrectas " << RespIncorrectas << endl;
+                }
+            }
+        }
+        
+        float Puntaje, NotaFinal;
+
+        #pragma omp critical
+        {
+            Puntaje = (RespCorrectas[ID] * 0.5) - (RespIncorrectas[ID] * 0.12);
+            //cout << "Hilo: " << omp_get_thread_num() << " = " << "Puntaje " << Puntaje << endl;
+            
+            if(Puntaje < 0)
+                Puntaje = 0;
+            
+            NotaFinal = 1 + Puntaje;
+            //cout << "Hilo: " << omp_get_thread_num() << " = " << "Nota Final " << NotaFinal << endl;
+            NotaFinal = round(NotaFinal * 10) / 10.0;
+            
+            
+            //cout << "Hilo: " << omp_get_thread_num() <<  " = " << Token << "/" << RespCorrectas << "-" << RespIncorrectas << "-" << RespOmitidas << "-" << Puntaje << "-" << NotaFinal << endl;
+            *Archivo_Aux << Token[ID] << ";" << "\"" << RespCorrectas[ID] << "\"" << ";" << "\"" << RespIncorrectas[ID] << "\"" << ";" << "\"" << RespOmitidas[ID] << "\"" << ";" << "\"" << Puntaje << "\"" << ";" << "\"" << NotaFinal << "\"" << endl;
+        }   //end critical
+    }   //end for()
+    
+    #pragma omp barrier
+    RespCorrectas[ID] = RespIncorrectas[ID] = RespOmitidas[ID] = 0;
+}   //end parallel
+    Aux.clear();
+}
 
 void LeerEscribir()
 {
-    ifstream archivo;
+    ifstream archivo_origen;  // Pruebas
+    ofstream archivo_destino; // Resultados
+
+    vector<string> filas;
     string linea;
-    char delimitador = ';';
-    int cont=0;
-    ofstream destino;
+    int cont = 0;
 
-    //Destino de los resultados obtenidos.
-    destino.open("resultadospruebas.csv", ios::out);
+    // Abrimos el archivo que debemos leer.
+    archivo_origen.open("pruebas.csv", ios::in);
 
-    if(destino.fail()){
+    if (archivo_origen.fail())
+    {
+        cout << "Error: no se pudo abrir el archivo pruebas.csv" << endl;
+        exit(1);
+    }
+
+    // Destino de los resultados obtenidos.
+    archivo_destino.open("resultados_MP.csv", ios::out);
+
+    if (archivo_destino.fail())
+    {
         cout << "Error: no se puede abrir el archivo resultadospruebas.csv" << endl;
         exit(1);
     }
-    
-    //Abrimos el archivo que debemos leer.
-    archivo.open("pruebas.csv", ios::in);
 
-    if(archivo.fail()){
-        cout << "Error: no se pudo abrir el archivo pruebas.csv" << endl;
-        exit(1);
-    }
-    
-    archivo.close();
-
-    //Abrimos el archivo que debemos leer.
-    archivo.open("pruebas.csv", ios::in);
-
-    if(archivo.fail()){
-        cout << "Error: no se pudo abrir el archivo pruebas.csv" << endl;
-        exit(1);
-    }
-
-    //Omitimos la primera línea.
-    getline(archivo, linea);
-    getline(archivo, linea);
-    
-    //Ingresamos la primera línea al archivo de destino.
     stringstream Columnas;
     Columnas << "\"Identificador de Estudiante\"" << ";" << "\"Preguntas correctas\"" << ";" << "\"Preguntas incorrectas\"" << ";" << "\"Preguntas omitidas\"" << ";" << "\"Puntaje\"" << ";" << "\"Nota\"";
     string PrimeraFila = Columnas.str();
-    destino << PrimeraFila << endl;
+    archivo_destino << PrimeraFila << endl;
 
-    //Variable para capturar los datos del archivo.
-    string Datos[13];
-    string PregCorrectas[12] = {"\"A\"", "\"E\"", "\"C\"", "\"B\"", "\"B\"", "\"D\"", "\"A\"", "\"B\"", "\"E\"", "\"C\"", "\"B\"", "\"D\""};
+    // Quitamos la primera línea.
+    getline(archivo_origen, linea);
 
-    //Contador de preguntas correctas, incorrectas y omitidas.
-    int RespCorrectas, RespIncorrectas, RespOmitidas;
-    RespCorrectas = RespIncorrectas = RespOmitidas = 0;
-
-    #pragma omp parallel 
+    // Comenzamos a leer el archivo.
+    while (!archivo_origen.eof())
     {
-        while(getline(archivo,linea)){
-            stringstream stream(linea);
-            getline(stream, Datos[0], delimitador);
-            getline(stream, Datos[1], delimitador);
-            getline(stream, Datos[2], delimitador);
-            getline(stream, Datos[3], delimitador);
-            getline(stream, Datos[4], delimitador);
-            getline(stream, Datos[5], delimitador);
-            getline(stream, Datos[6], delimitador);
-            getline(stream, Datos[7], delimitador);
-            getline(stream, Datos[8], delimitador);
-            getline(stream, Datos[9], delimitador);
-            getline(stream, Datos[10], delimitador);
-            getline(stream, Datos[11], delimitador);
-            getline(stream, Datos[12], delimitador);
-            
-            //Calculamos el puntaje del estudiante.
-            #pragma omp for
-            for(int i = 1, j = 0; i < 13; i++, j++){
-                if(Datos[i] == "\"-\""){
-                    RespOmitidas++;
-                }
-                else{
-                    if(Datos[i].compare(PregCorrectas[j]) == 0){
-                        RespCorrectas++;
-                    }
-                    else{
-                        RespIncorrectas++;
-                    }
-                }
-            }
+        if (cont == 3)
+        {
+            //cout << "Entró al if" << endl;
+            Evaluar(&archivo_destino, filas);
 
-            #pragma omp atomic
-            float Puntaje = (RespCorrectas * 0.5) - (RespIncorrectas * 0.12);
-
-            #pragma omp atomic
-            float NotaFinal = 1 + Puntaje;
-
-            if(NotaFinal < 1)
-                NotaFinal = 1;
-
-            string Aux_Correctas, Aux_Incorrectas, Aux_Omitidas, Aux_Puntaje, Aux_NFinal;
-
-            Aux_Correctas = "\"" + to_string(RespCorrectas) + "\"";
-            Aux_Incorrectas = "\"" + to_string(RespIncorrectas) + "\"";
-            Aux_Omitidas = "\"" + to_string(RespOmitidas) + "\"";
-            Aux_Puntaje = "\"" + to_string(Puntaje) + "\"";
-            Aux_NFinal = "\"" + to_string(NotaFinal) + "\"";
-            
-            #pragma omp atomic
-            string LineaDocumento = Datos[0] + ";" + Aux_Correctas + ";" + Aux_Incorrectas + ";" + Aux_Omitidas + ";" + Aux_Puntaje + ";" + Aux_NFinal;
-
-            #pragma omp atomic
-            destino << LineaDocumento << endl; 
-
-            RespCorrectas = RespIncorrectas = RespOmitidas = 0;
+            // Reiniciamos nuestro contador.
+            cont = 0;
+            filas.clear();
+            //exit(1);
         }
+
+        // Guardamos de a 3 líneas.
+        getline(archivo_origen, linea);
+        filas.push_back(linea);
+
+        cont++;
     }
-    
-    //Cerramos los archivos al finalizar el bucle.
-    archivo.close();
-    destino.close();
+    // Cerramos los archivos al finalizar el bucle.
+    archivo_origen.close();
+    archivo_destino.close();
 }
 
 int main()
 {
+    Integrantes();
     LeerEscribir();
     cout << "Grabación hecha con éxito" << endl;
     return EXIT_SUCCESS;
