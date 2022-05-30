@@ -1,4 +1,4 @@
-output: main.o
+secuencial: main.o
 	g++ main.o -o secuencial
 
 main.o: main.cpp
