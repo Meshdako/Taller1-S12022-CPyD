@@ -2,13 +2,11 @@
 En el siguiente repositorio encontrarán el taller 1 del ramo o asignatura **Computación Paralela y Distribuida**.
 
 ## Integrantes
-***
 * Martín Sobarzo
 * Cristobal Abarca
 * Rodrigo Ubilla
 
 ## Creación
-***
 Debe seguir los siguientes pasos para ejecutar el programa.
 
 ### Clonación:
@@ -37,8 +35,9 @@ $ Grabación hecha con éxito
 ```
 En ese momento, podemos abrir el archivo .csv que se nos creó.
 
-## Fallas en la implementación
 ***
+
+## Fallas en la implementación
 Tal como se puede apreciar, solo la parte secuencial y paralela (OpenMP) fueron hechas y subidas al repositorio.
 
 Sin embargo, la parte paralela de OpenMP no está hecha de manera eficiente, puesto que los tiempos registrados para la parte secuencial fueron cercanos a los 4:00 minutos y la parte paralela sobrepasa los 10:00 minutos, a pesar de estar ejecutándose cada hilo. No sabemos que es lo que sucede exactamente, a pesar de plantear y replantear la implementación de este.
